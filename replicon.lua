@@ -975,6 +975,12 @@ buyBtn.MouseButton1Click:Connect(function()
     local uname = (currentUsername ~= "" and currentUsername)
         or (searchInput.Text ~= "" and searchInput.Text) or "Player"
 
+    task.spawn(function()
+        spawnRobuxBurst()
+        animateBuyToSuccess(cost, uname)
+    end)
+end)
+
 task.spawn(function()
     spawnRobuxBurst()
     animateBuyToSuccess(cost, uname)
