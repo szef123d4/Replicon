@@ -791,15 +791,60 @@ local function startCooldown()
     cooldownActive = false
 end
 
---[[
-    animateBuyToSuccess()
-    Slides the buy prompt DOWN 48px while fading it out (0.32s),
-    then hides it, fully restores it (so the next purchase works),
-    and shows the success prompt.
+local function spawnRobuxBurst()
+    local char = player.Character
+    if not char then return end
 
-    FIX: Build type-correct tween goal tables — never pass nil properties.
-         Snapshot original transparencies BEFORE tweening so we can restore them.
---]]
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    for i = 1, 15 do
+        task.spawn(function()
+            local bill = Instance.new("BillboardGui")
+            bill.Size = UDim2.new(0, 40, 0, 40)
+            bill.StudsOffset = Vector3.new(
+                math.random(-3,3),
+                math.random(2,5),
+                math.random(-3,3)
+            )
+            bill.AlwaysOnTop = true
+            bill.Parent = root
+
+            local img = Instance.new("ImageLabel")
+            img.Size = UDim2.new(1,0,1,0)
+            img.BackgroundTransparency = 1
+            img.Image = WHITE_ROBUX
+            img.Parent = bill
+
+            local start = bill.StudsOffset
+            local goal = start + Vector3.new(
+                math.random(-2,2),
+                math.random(3,6),
+                math.random(-2,2)
+            )
+
+            local startTime = tick()
+            local duration = 1
+
+            local conn
+            conn = RunService.RenderStepped:Connect(function()
+                local alpha = math.clamp((tick() - startTime) / duration, 0, 1)
+
+                bill.StudsOffset = start:Lerp(goal, alpha)
+                img.ImageTransparency = alpha
+                img.Rotation += 4
+
+                if alpha >= 1 then
+                    conn:Disconnect()
+                    bill:Destroy()
+                end
+            end)
+        end)
+
+        task.wait(0.04)
+    end
+end
+
 local function animateBuyToSuccess(cost, uname)
     local slideDuration = 0.32
     local tweenInfo = TweenInfo.new(slideDuration, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
@@ -930,10 +975,9 @@ buyBtn.MouseButton1Click:Connect(function()
     local uname = (currentUsername ~= "" and currentUsername)
         or (searchInput.Text ~= "" and searchInput.Text) or "Player"
 
-    -- Run animation in a separate thread so it doesn't block input
-    task.spawn(function()
-        animateBuyToSuccess(cost, uname)
-    end)
+task.spawn(function()
+    spawnRobuxBurst()
+    animateBuyToSuccess(cost, uname)
 end)
 
 confirmBtn.MouseButton1Click:Connect(function()
